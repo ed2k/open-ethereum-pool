@@ -12,6 +12,9 @@ import (
 	"strings"
 	"sync"
 
+	"net"
+	"bufio"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/sammy007/open-ethereum-pool/util"
@@ -25,6 +28,7 @@ type RPCClient struct {
 	sickRate    int
 	successRate int
 	client      *http.Client
+        stratum     net.Conn
 }
 
 type GetBlockReply struct {
@@ -85,6 +89,14 @@ func NewRPCClient(name, url, timeout string) *RPCClient {
 	rpcClient.client = &http.Client{
 		Timeout: timeoutIntv,
 	}
+	rpcClient.stratum, _ = net.Dial("tcp", "127.0.0.1:30100")
+    var text = `{"id":1, "method":"mining.subscribe"}`
+    var conn = rpcClient.stratum
+    // send to socket
+    fmt.Fprintf(conn, text + "\n")
+    // listen for reply
+    message, _ := bufio.NewReader(conn).ReadString('\n')
+    fmt.Print("stratum: "+message)
 	return rpcClient
 }
 
@@ -153,6 +165,18 @@ func (r *RPCClient) GetTxReceipt(hash string) (*TxReceipt, error) {
 }
 
 func (r *RPCClient) SubmitBlock(params []string) (bool, error) {
+    var text = `{"id":4, "method":"mining.submit","params":[`
+    //var conn = r.stratum
+    for _,s := range params {
+        text += s+","
+    }
+    text += `]}`
+    // send to socket
+    fmt.Print("stratum> "+text)
+    //fmt.Fprintf(conn, text + "\n")
+    // listen for reply
+    //message, _ := bufio.NewReader(conn).ReadString('\n')
+    //fmt.Print("stratum< "+message)
 	rpcResp, err := r.doPost(r.Url, "eth_submitWork", params)
 	if err != nil {
 		return false, err

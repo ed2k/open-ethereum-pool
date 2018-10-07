@@ -38,6 +38,7 @@ func (s *ProxyServer) handleGetWorkRPC(cs *Session) ([]string, *ErrorReply) {
 	if t == nil || len(t.Header) == 0 || s.isSick() {
 		return nil, &ErrorReply{Code: 0, Message: "Work not ready"}
 	}
+	log.Printf("Stratum getWork seed %v diff %v", t.Seed, s.diff)
 	return []string{t.Header, t.Seed, s.diff}, nil
 }
 
@@ -70,6 +71,7 @@ func (s *ProxyServer) handleSubmitRPC(cs *Session, login, id string, params []st
 	}
 	t := s.currentBlockTemplate()
 	exist, validShare := s.processShare(login, id, cs.ip, t, params)
+        //validShare = true
 	ok := s.policy.ApplySharePolicy(cs.ip, !exist && validShare)
 
 	if exist {

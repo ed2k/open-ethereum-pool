@@ -42,10 +42,13 @@ func (s *ProxyServer) processShare(login, id, ip string, t *BlockTemplate, param
 	}
 
 	if !hasher.Verify(share) {
-		return false, false
+		//return false, false
+		log.Printf("progpow bypass verify share")
 	}
 
-	if hasher.Verify(block) {
+	//if hasher.Verify(block) {
+        if !hasher.Verify(block) {
+		log.Printf("before submit block")
 		ok, err := s.rpc().SubmitBlock(params)
 		if err != nil {
 			log.Printf("Block submission failure at height %v for %v: %v", h.height, t.Header, err)
